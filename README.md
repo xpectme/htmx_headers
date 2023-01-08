@@ -1,2 +1,3 @@
-# backend_htmx
-Environment-agnostic server backend for HTMX
+# Backend HTMX
+
+This is an environment agnostic backend for [htmx](https://htmx.org/).
