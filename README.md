@@ -1,4 +1,4 @@
-# HTMX Middleware
+# HTMX Request/Response Headers
 
 This is a environment-agnostic backend for [HTMX](https://htmx.org/). It simply
 generates the HTMX response headers and provides a state object that contains
