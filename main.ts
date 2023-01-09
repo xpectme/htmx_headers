@@ -1,4 +1,4 @@
-export interface HTMXLocation {
+export interface HXHeaderLocation {
   path: string;
   source?: string;
   event?: string;
@@ -8,7 +8,7 @@ export interface HTMXLocation {
   headers?: string;
 }
 
-export interface HTMXRequestHeader {
+export interface HXHeaderRequestInfo {
   boosted: boolean;
   historyRestoreRequest: boolean;
   currentUrl: string | null;
@@ -18,7 +18,7 @@ export interface HTMXRequestHeader {
   triggerName: string | null;
 }
 
-export type HTMXSwapBaseModifiers =
+export type HXSwapBaseModifiers =
   | "outerHTML"
   | "innerHTML"
   | "beforebegin"
@@ -28,21 +28,21 @@ export type HTMXSwapBaseModifiers =
   | "delete"
   | "none";
 
-export type HTMXSwapTimingModifier =
+export type HXSwapTimingModifier =
   | `swap:${number}${"ms" | "s" | "m"}`
   | `settle:${number}${"ms" | "s" | "m"}`;
-export type HTMXSwapScrollingModifier =
+export type HXSwapScrollingModifier =
   | `scroll:${"top" | "bottom" | string}`
   | `show:${"top" | "bottom" | string}`
   | `focus-scroll:${boolean}`;
 
-export type HTMXSwapModifiers =
-  | HTMXSwapBaseModifiers
-  | HTMXSwapTimingModifier
-  | HTMXSwapScrollingModifier;
+export type HXSwapModifiers =
+  | HXSwapBaseModifiers
+  | HXSwapTimingModifier
+  | HXSwapScrollingModifier;
 
-export class BackendHTMX {
-  #state: HTMXRequestHeader | null = null;
+export class HXHeaders {
+  #state: HXHeaderRequestInfo | null = null;
 
   get boosted() {
     return this.#state?.boosted;
@@ -75,7 +75,8 @@ export class BackendHTMX {
     return this.#isHTMX;
   }
 
-  constructor(headers: Headers) {
+  constructor(headers: Headers | Record<string, string> | [string, string][]) {
+    headers = new Headers(headers);
     this.#isHTMX = headers.get("HX-Request") === "true";
     if (this.#isHTMX) {
       this.#state = {
@@ -125,7 +126,7 @@ export class BackendHTMX {
    * - headers - headers to submit with the request
    * @see https://htmx.org/headers/hx-location/
    */
-  location(hxLocation: string | Partial<HTMXLocation>) {
+  location(hxLocation: string | Partial<HXHeaderLocation>) {
     if (this.#isHTMX) {
       if (typeof hxLocation === "object" && hxLocation !== null) {
         // convert the object into a map
@@ -165,11 +166,7 @@ export class BackendHTMX {
    */
   pushUrl(url: string | false) {
     if (this.#isHTMX) {
-      return {
-        headers: {
-          "HX-Push-Url": url ? url : "false",
-        },
-      };
+      return { headers: { "HX-Push-Url": url ? url : "false" } };
     }
   }
 
@@ -188,11 +185,7 @@ export class BackendHTMX {
    */
   replaceUrl(url: string | false) {
     if (this.#isHTMX) {
-      return {
-        headers: {
-          "HX-Replace-Url": url ? url : "false",
-        },
-      };
+      return { headers: { "HX-Replace-Url": url ? url : "false" } };
     }
   }
 
@@ -200,21 +193,11 @@ export class BackendHTMX {
    * Can be used to do a client-side redirect to a new location
    * @see https://htmx.org/reference/#response_headers
    */
-  redirect(url: string) {
+  redirect(url: string, handleHttpRedirect = true) {
     if (this.#isHTMX) {
-      return {
-        status: 204,
-        headers: {
-          "HX-Redirect": url,
-        },
-      };
-    } else {
-      return {
-        status: 303,
-        headers: {
-          Location: url,
-        },
-      };
+      return { status: 204, headers: { "HX-Redirect": url } };
+    } else if (handleHttpRedirect) {
+      return { status: 303, headers: { Location: url } };
     }
   }
 
@@ -224,12 +207,7 @@ export class BackendHTMX {
    */
   refresh() {
     if (this.#isHTMX) {
-      return {
-        status: 204,
-        headers: {
-          "HX-Refresh": "true",
-        },
-      };
+      return { status: 204, headers: { "HX-Refresh": "true" } };
     }
   }
 
@@ -238,14 +216,10 @@ export class BackendHTMX {
    * See hx-swap for possible values.
    * @see https://htmx.org/attributes/hx-swap/
    */
-  reswap(...modifiers: Array<HTMXSwapModifiers>) {
+  reswap(...modifiers: Array<HXSwapModifiers>) {
     if (this.#isHTMX) {
-      const set = new Set<HTMXSwapModifiers>(modifiers);
-      return {
-        headers: {
-          "HX-Reswap": Array.from(set).join(" "),
-        },
-      };
+      const set = new Set<HXSwapModifiers>(modifiers);
+      return { headers: { "HX-Reswap": Array.from(set).join(" ") } };
     }
   }
 
@@ -256,11 +230,7 @@ export class BackendHTMX {
    */
   retarget(selector: string) {
     if (this.#isHTMX) {
-      return {
-        headers: {
-          "HX-Retarget": selector,
-        },
-      };
+      return { headers: { "HX-Retarget": selector } };
     }
   }
 
@@ -285,9 +255,7 @@ export class BackendHTMX {
           break;
       }
       return {
-        headers: {
-          [header]: JSON.stringify(events),
-        },
+        headers: { [header]: JSON.stringify(events) },
       };
     }
   }
