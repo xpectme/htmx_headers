@@ -215,8 +215,8 @@ export class HXHeaders {
    * If set to "true" the client side will do a a full refresh of the page.
    * @see https://htmx.org/reference/#response_headers
    */
-  refresh(value: boolean) {
-    if (this.#isHTMX && value) {
+  refresh() {
+    if (this.#isHTMX) {
       this.insertIntoResponeHeaders("HX-Refresh", "true");
     }
   }
