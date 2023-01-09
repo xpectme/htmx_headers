@@ -1,8 +1,8 @@
 # HTMX Middleware
 
 This is a environment-agnostic backend for [HTMX](https://htmx.org/). It simply
-generates the HTMX headers and provides a state object that contains information
-about the HTMX request.
+generates the HTMX response headers and provides a state object that contains
+information about the HTMX request.
 
 ## Usage
 
