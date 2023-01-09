@@ -91,24 +91,6 @@ const httpRes = hx.redirect("/new/url");
 // => { headers: { "HX-Redirect": "/new/url" } }
 ```
 
-If `isHTMX` is `false` the `HX-Redirect` header will be ignored and the client
-will be redirected to the new URL.
-
-```ts
-const hx = new HXHeaders({});
-const httpRes = hx.redirect("/new/url");
-// => { status: 303, headers: { Location: "/new/url" } }
-```
-
-The second parameter `handleHttpRedirect` can be toggled to `false` to disable
-the automatic redirect.
-
-```ts
-const hx = new HXHeaders({});
-const httpRes = hx.redirect("/new/url", false);
-// => undefined
-```
-
 ### `hx.refresh(hxRefresh: string)`
 
 The `HX-Refresh` header is used to tell the client to refresh the current page.

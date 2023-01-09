@@ -41,8 +41,14 @@ export type HXSwapModifiers =
   | HXSwapTimingModifier
   | HXSwapScrollingModifier;
 
+export type HTTPHeaders = Headers | Record<string, string> | [string, string][];
+
 export class HXHeaders {
   #state: HXHeaderRequestInfo | null = null;
+  #responseHeaders!: HTTPHeaders;
+  get responseHeaders() {
+    return this.#responseHeaders;
+  }
 
   get boosted() {
     return this.#state?.boosted;
@@ -75,21 +81,34 @@ export class HXHeaders {
     return this.#isHTMX;
   }
 
-  constructor(headers: Headers | Record<string, string> | [string, string][]) {
-    headers = new Headers(headers);
-    this.#isHTMX = headers.get("HX-Request") === "true";
+  constructor(reqHeaders?: HTTPHeaders, resHeaders?: HTTPHeaders) {
+    if (reqHeaders) {
+      this.setRequestHeaders(reqHeaders);
+    }
+    if (resHeaders) {
+      this.setResponseHeaders(resHeaders);
+    }
+  }
+
+  setRequestHeaders(reqHeaders: HTTPHeaders) {
+    reqHeaders = new Headers(reqHeaders);
+    this.#isHTMX = reqHeaders.get("HX-Request") === "true";
     if (this.#isHTMX) {
       this.#state = {
-        boosted: headers.get("HX-Boosted") === "true",
+        boosted: reqHeaders.get("HX-Boosted") === "true",
         historyRestoreRequest:
-          headers.get("HX-History-Restore-Request") === "true",
-        currentUrl: headers.get("HX-Current-URL"),
-        prompt: headers.get("HX-Prompt"),
-        targetId: headers.get("HX-Target"),
-        triggerName: headers.get("HX-Trigger-Name"),
-        triggerId: headers.get("HX-Trigger"),
+          reqHeaders.get("HX-History-Restore-Request") === "true",
+        currentUrl: reqHeaders.get("HX-Current-URL"),
+        prompt: reqHeaders.get("HX-Prompt"),
+        targetId: reqHeaders.get("HX-Target"),
+        triggerName: reqHeaders.get("HX-Trigger-Name"),
+        triggerId: reqHeaders.get("HX-Trigger"),
       };
     }
+  }
+
+  setResponseHeaders(resHeaders: HTTPHeaders) {
+    this.#responseHeaders = resHeaders;
   }
 
   /**
@@ -126,27 +145,20 @@ export class HXHeaders {
    * - headers - headers to submit with the request
    * @see https://htmx.org/headers/hx-location/
    */
-  location(hxLocation: string | Partial<HXHeaderLocation>) {
+  location(value: HXHeaderLocation | string) {
     if (this.#isHTMX) {
-      if (typeof hxLocation === "object" && hxLocation !== null) {
+      if (typeof value === "object" && value !== null) {
         // convert the object into a map
-        const map = new Map<string, string>(Object.entries(hxLocation));
+        const map = new Map<string, string>(Object.entries(value));
         if (!map.has("path")) {
           throw new Error("path is required");
         }
         if (map.size === 1 && map.has("path")) {
           // only path is provided
-          hxLocation = map.get("path")!;
+          value = map.get("path")!;
         }
       }
-
-      return {
-        headers: {
-          "HX-Location": "string" === typeof hxLocation
-            ? hxLocation
-            : JSON.stringify(hxLocation),
-        },
-      };
+      this.insertIntoResponeHeaders("HX-Location", value);
     }
   }
 
@@ -166,7 +178,7 @@ export class HXHeaders {
    */
   pushUrl(url: string | false) {
     if (this.#isHTMX) {
-      return { headers: { "HX-Push-Url": url ? url : "false" } };
+      this.insertIntoResponeHeaders("HX-Push-Url", url ? url : "false");
     }
   }
 
@@ -185,7 +197,7 @@ export class HXHeaders {
    */
   replaceUrl(url: string | false) {
     if (this.#isHTMX) {
-      return { headers: { "HX-Replace-Url": url ? url : "false" } };
+      this.insertIntoResponeHeaders("HX-Replace-Url", url ? url : "false");
     }
   }
 
@@ -193,11 +205,9 @@ export class HXHeaders {
    * Can be used to do a client-side redirect to a new location
    * @see https://htmx.org/reference/#response_headers
    */
-  redirect(url: string, handleHttpRedirect = true) {
+  redirect(url: string) {
     if (this.#isHTMX) {
-      return { status: 204, headers: { "HX-Redirect": url } };
-    } else if (handleHttpRedirect) {
-      return { status: 303, headers: { Location: url } };
+      this.insertIntoResponeHeaders("HX-Redirect", url);
     }
   }
 
@@ -205,9 +215,9 @@ export class HXHeaders {
    * If set to "true" the client side will do a a full refresh of the page.
    * @see https://htmx.org/reference/#response_headers
    */
-  refresh() {
-    if (this.#isHTMX) {
-      return { status: 204, headers: { "HX-Refresh": "true" } };
+  refresh(value: boolean) {
+    if (this.#isHTMX && value) {
+      this.insertIntoResponeHeaders("HX-Refresh", "true");
     }
   }
 
@@ -218,8 +228,8 @@ export class HXHeaders {
    */
   reswap(...modifiers: Array<HXSwapModifiers>) {
     if (this.#isHTMX) {
-      const set = new Set<HXSwapModifiers>(modifiers);
-      return { headers: { "HX-Reswap": Array.from(set).join(" ") } };
+      const modifiersSet = new Set<HXSwapModifiers>(modifiers);
+      this.insertIntoResponeHeaders("HX-Reswap", [...modifiersSet].join(" "));
     }
   }
 
@@ -230,7 +240,7 @@ export class HXHeaders {
    */
   retarget(selector: string) {
     if (this.#isHTMX) {
-      return { headers: { "HX-Retarget": selector } };
+      this.insertIntoResponeHeaders("HX-Retarget", selector);
     }
   }
 
@@ -254,9 +264,23 @@ export class HXHeaders {
           header = "HX-Trigger-After-Swap";
           break;
       }
-      return {
-        headers: { [header]: JSON.stringify(events) },
-      };
+      this.insertIntoResponeHeaders(header, events);
+    }
+  }
+
+  /**
+   * Sets the response header.
+   */
+  insertIntoResponeHeaders(header: string, value: unknown) {
+    const headerValue = typeof value === "string"
+      ? value
+      : JSON.stringify(value);
+    if (this.#responseHeaders instanceof Headers) {
+      this.#responseHeaders.set(header, headerValue);
+    } else if (Array.isArray(this.#responseHeaders)) {
+      this.#responseHeaders.push([header, headerValue]);
+    } else {
+      this.#responseHeaders[header] = headerValue;
     }
   }
 }
