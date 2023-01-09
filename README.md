@@ -9,11 +9,14 @@ information about the HTMX request.
 ```ts
 import { HXHeaders } from "https://deno.land/x/backend_htmx/main.ts";
 
-const hx = new HXHeaders({ "HX-Request": "true" });
+const reqHeaders = { "HX-Request": "true" };
+const resHeaders = {};
+
+const hx = new HXHeaders(reqHeaders, resHeaders);
 console.log(hx.isHTMX); // true
 
-const res = hx.location("/new/url");
-console.log(res.headers); // { "HX-Location": "/new/url" }
+hx.location("/new/url");
+console.log(resHeaders); // { "HX-Location": "/new/url" }
 ```
 
 ## `hx` properties
@@ -58,7 +61,7 @@ The name of the element that triggered the request
 The `HX-Location` header is used to tell the client to navigate to a new URL.
 
 ```ts
-const httpRes = hx.location("/new/url");
+hx.location("/new/url");
 // => { headers: { "HX-Location": "/new/url" } }
 ```
 
@@ -68,7 +71,7 @@ The `HX-Push-Url` header is used to tell the client to push a new URL to the
 history stack.
 
 ```ts
-const httpRes = hx.pushUrl("/new/url");
+hx.pushUrl("/new/url");
 // => { headers: { "HX-Push-Url": "/new/url" } }
 ```
 
@@ -78,7 +81,7 @@ The `HX-Replace-URL` header is used to tell the client to replace the current
 URL in the history stack.
 
 ```ts
-const httpRes = hx.replaceUrl("/new/url");
+hx.replaceUrl("/new/url");
 // => { headers: { "HX-Replace-URL": "/new/url" } }
 ```
 
@@ -87,7 +90,7 @@ const httpRes = hx.replaceUrl("/new/url");
 The `HX-Redirect` header is used to tell the client to redirect to a new URL.
 
 ```ts
-const httpRes = hx.redirect("/new/url");
+hx.redirect("/new/url");
 // => { headers: { "HX-Redirect": "/new/url" } }
 ```
 
@@ -96,7 +99,7 @@ const httpRes = hx.redirect("/new/url");
 The `HX-Refresh` header is used to tell the client to refresh the current page.
 
 ```ts
-const httpRes = hx.refresh();
+hx.refresh();
 // => { headers: { "HX-Refresh": "true" } }
 ```
 
@@ -109,7 +112,7 @@ See [HX-Reswap](https://htmx.org/reference/#response_headers) for more
 information.
 
 ```ts
-const httpRes = hx.reswap("innerHTML");
+hx.reswap("innerHTML");
 // => { headers: { "HX-Reswap": "innerHTML" } }
 ```
 
@@ -122,7 +125,7 @@ See [HX-Retarget](https://htmx.org/reference/#response_headers) for more
 information.
 
 ```ts
-const httpRes = hx.retarget("#my-element");
+hx.retarget("#my-element");
 // => { headers: { "HX-Retarget": "#my-element" } }
 ```
 
@@ -134,21 +137,21 @@ current page.
 Trigger an event on the current page.
 
 ```ts
-const httpRes = hx.trigger({ "my-event": "my message" });
+hx.trigger({ "my-event": "my message" });
 // => { headers: { "HX-Trigger": '{"my-event": "my message"}' } }
 ```
 
 Trigger an event on the current page after the page has settled.
 
 ```ts
-const httpRes = hx.trigger({ "my-event": "my message" }, "afterswap");
+hx.trigger({ "my-event": "my message" }, "afterswap");
 // => { headers: { "HX-Trigger-After-Swap": '{"my-event": "my message"}' } }
 ```
 
 Trigger an event on the current page after the page has settled.
 
 ```ts
-const httpRes = hx.trigger({ "my-event": "my message" }, "aftersettle");
+hx.trigger({ "my-event": "my message" }, "aftersettle");
 // => { headers: { "HX-Trigger-After-Settle": '{"my-event": "my message"}' } }
 ```
 
