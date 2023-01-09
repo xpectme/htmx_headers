@@ -62,7 +62,7 @@ The `HX-Location` header is used to tell the client to navigate to a new URL.
 
 ```ts
 hx.location("/new/url");
-// => { headers: { "HX-Location": "/new/url" } }
+// => { "HX-Location": "/new/url" }
 ```
 
 ### `hx.pushUrl(hxPushUrl: string)`
@@ -72,7 +72,7 @@ history stack.
 
 ```ts
 hx.pushUrl("/new/url");
-// => { headers: { "HX-Push-Url": "/new/url" } }
+// => { "HX-Push-Url": "/new/url" }
 ```
 
 ### `hx.replaceUrl(hxReplaceUrl: string)`
@@ -82,7 +82,7 @@ URL in the history stack.
 
 ```ts
 hx.replaceUrl("/new/url");
-// => { headers: { "HX-Replace-URL": "/new/url" } }
+// => { "HX-Replace-URL": "/new/url" }
 ```
 
 ### `hx.redirect(hxRedirect: string)`
@@ -91,7 +91,7 @@ The `HX-Redirect` header is used to tell the client to redirect to a new URL.
 
 ```ts
 hx.redirect("/new/url");
-// => { headers: { "HX-Redirect": "/new/url" } }
+// => { "HX-Redirect": "/new/url" }
 ```
 
 ### `hx.refresh(hxRefresh: string)`
@@ -100,7 +100,7 @@ The `HX-Refresh` header is used to tell the client to refresh the current page.
 
 ```ts
 hx.refresh();
-// => { headers: { "HX-Refresh": "true" } }
+// => { "HX-Refresh": "true" }
 ```
 
 ### `hx.reswap(...modifiers: HTMXSwapModifiers)`
@@ -113,7 +113,7 @@ information.
 
 ```ts
 hx.reswap("innerHTML");
-// => { headers: { "HX-Reswap": "innerHTML" } }
+// => { "HX-Reswap": "innerHTML" }
 ```
 
 ### `hx.retarget(selector: string)`
@@ -126,7 +126,7 @@ information.
 
 ```ts
 hx.retarget("#my-element");
-// => { headers: { "HX-Retarget": "#my-element" } }
+// => { "HX-Retarget": "#my-element" }
 ```
 
 ### `hx.trigger(event: string, mode: "aftersettle" | "afterswap" | null = null)`
@@ -138,21 +138,21 @@ Trigger an event on the current page.
 
 ```ts
 hx.trigger({ "my-event": "my message" });
-// => { headers: { "HX-Trigger": '{"my-event": "my message"}' } }
+// => { "HX-Trigger": '{"my-event": "my message"}' }
 ```
 
 Trigger an event on the current page after the page has settled.
 
 ```ts
 hx.trigger({ "my-event": "my message" }, "afterswap");
-// => { headers: { "HX-Trigger-After-Swap": '{"my-event": "my message"}' } }
+// => { "HX-Trigger-After-Swap": '{"my-event": "my message"}' }
 ```
 
 Trigger an event on the current page after the page has settled.
 
 ```ts
 hx.trigger({ "my-event": "my message" }, "aftersettle");
-// => { headers: { "HX-Trigger-After-Settle": '{"my-event": "my message"}' } }
+// => { "HX-Trigger-After-Settle": '{"my-event": "my message"}' }
 ```
 
 ## License
